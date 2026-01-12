@@ -48,7 +48,7 @@ export const source = loader({
 });
 ```
 
-### 2. Create the API route
+### 2. Create the API routes
 
 Create `app/api/fumadocs-edit/route.ts`:
 
@@ -58,6 +58,16 @@ import { createNextHandler, createNextReadHandler } from 'fumadocs-editor/server
 export const GET = createNextReadHandler();
 export const POST = createNextHandler();
 ```
+
+Create `app/api/fumadocs-edit/preview/route.ts` (for live preview):
+
+```ts
+import { createNextPreviewHandler } from 'fumadocs-editor/server';
+
+export const POST = createNextPreviewHandler();
+```
+
+> **Note:** The preview route requires `@fumadocs/mdx-remote` to be installed. Without it, preview will show an error message.
 
 ### 3. Create an editor provider wrapper
 

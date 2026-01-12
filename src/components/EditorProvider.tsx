@@ -53,6 +53,12 @@ export interface EditorProviderProps {
   enablePreview?: boolean;
 
   /**
+   * API endpoint for preview compilation.
+   * @default "/api/fumadocs-edit/preview"
+   */
+  previewEndpoint?: string;
+
+  /**
    * Position of the floating edit button
    * @default "bottom-right"
    */
@@ -102,6 +108,7 @@ export function EditorProvider({
   mdxComponents,
   initialViewMode = 'split',
   enablePreview = true,
+  previewEndpoint = '/api/fumadocs-edit/preview',
   buttonPosition = 'bottom-right',
   buttonStyle,
   buttonClassName,
@@ -174,6 +181,7 @@ export function EditorProvider({
           mdxComponents={mdxComponents}
           initialViewMode={initialViewMode}
           enablePreview={enablePreview}
+          previewEndpoint={previewEndpoint}
           onClose={() => setIsEditorOpen(false)}
         />
       )}

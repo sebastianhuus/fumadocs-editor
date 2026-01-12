@@ -47,6 +47,9 @@ export interface EditorComponentProps {
 
   /** Whether to enable live preview panel */
   enablePreview?: boolean;
+
+  /** API endpoint for preview compilation (defaults to endpoint + '/preview') */
+  previewEndpoint?: string;
 }
 
 /**
@@ -122,5 +125,7 @@ export interface EditorPluginConfig {
   initialViewMode?: EditorViewMode;
   /** Whether to enable live preview panel (requires @fumadocs/mdx-remote) */
   enablePreview?: boolean;
+  /** API endpoint for preview compilation (defaults to endpoint + '/preview') */
+  previewEndpoint?: string;
 }
 

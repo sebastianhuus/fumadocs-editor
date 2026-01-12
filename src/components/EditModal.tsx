@@ -29,6 +29,9 @@ export interface EditModalProps {
   /** Whether to enable preview */
   enablePreview?: boolean;
 
+  /** API endpoint for preview compilation */
+  previewEndpoint?: string;
+
   /** Called when the modal should close */
   onClose: () => void;
 }
@@ -51,6 +54,7 @@ export function EditModal({
   mdxComponents,
   initialViewMode,
   enablePreview,
+  previewEndpoint,
   onClose,
 }: EditModalProps): ReactNode {
   const [state, setState] = useState<ModalState>({
@@ -253,6 +257,7 @@ export function EditModal({
             mdxComponents={mdxComponents}
             initialViewMode={initialViewMode}
             enablePreview={enablePreview}
+            previewEndpoint={previewEndpoint}
             onSave={handleSave}
             onCancel={onClose}
           />

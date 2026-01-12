@@ -22,17 +22,6 @@ interface MDXEditorMethods {
   insertMarkdown: (markdown: string) => void;
 }
 
-// Type for the MDX compiler from @fumadocs/mdx-remote
-interface MDXCompiler {
-  compile: (options: {
-    source: string;
-    components?: Record<string, unknown>;
-  }) => Promise<{
-    body: (props: { components?: Record<string, unknown> }) => ReactNode;
-    frontmatter: Record<string, unknown>;
-  }>;
-}
-
 // Lazy load MDXEditor module to avoid SSR issues and reduce bundle size
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let MDXEditorModule: any = null;
@@ -44,27 +33,36 @@ async function loadMDXEditor(): Promise<typeof import('@mdxeditor/editor')> {
   return MDXEditorModule;
 }
 
-// Lazy load @fumadocs/mdx-remote compiler
-let mdxCompiler: MDXCompiler | null = null;
+// Get the JSX runtime for executing compiled MDX
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let jsxRuntime: any = null;
 
-async function loadMDXCompiler(): Promise<MDXCompiler | null> {
-  if (mdxCompiler) return mdxCompiler;
+async function getJsxRuntime() {
+  if (jsxRuntime) return jsxRuntime;
+  jsxRuntime = await import('react/jsx-runtime');
+  return jsxRuntime;
+}
 
-  try {
-    const mod = await import('@fumadocs/mdx-remote');
-    mdxCompiler = mod.createCompiler({
-      // Use minimal preset for faster compilation in preview
-      preset: 'minimal',
-      development: true,
-    });
-    return mdxCompiler;
-  } catch {
-    // @fumadocs/mdx-remote not installed
-    console.warn(
-      'fumadocs-editor: @fumadocs/mdx-remote not found. Live preview disabled.',
-    );
-    return null;
-  }
+// Execute compiled MDX code in the browser
+// Based on @fumadocs/mdx-remote's executeMdx
+async function executeMdx(
+  compiled: string,
+  components?: Record<string, unknown>,
+): Promise<{ default: (props: { components?: Record<string, unknown> }) => ReactNode }> {
+  const runtime = await getJsxRuntime();
+
+  const fullScope = {
+    opts: {
+      ...runtime,
+    },
+    ...components,
+  };
+
+  // Create an async function from the compiled MDX code
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  const hydrateFn = new AsyncFunction(...Object.keys(fullScope), compiled);
+
+  return await hydrateFn.apply(hydrateFn, Object.values(fullScope));
 }
 
 /**
@@ -112,14 +110,16 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 /**
- * Preview panel component that compiles and renders MDX
+ * Preview panel component that compiles and renders MDX via server API
  */
 function PreviewPanel({
   content,
   mdxComponents,
+  previewEndpoint,
 }: {
   content: string;
   mdxComponents?: Record<string, unknown>;
+  previewEndpoint: string;
 }): ReactNode {
   const [preview, setPreview] = useState<{
     status: 'loading' | 'ready' | 'error';
@@ -134,32 +134,36 @@ function PreviewPanel({
     let cancelled = false;
 
     async function compile() {
-      const compiler = await loadMDXCompiler();
-      if (!compiler) {
-        setPreview({
-          status: 'error',
-          error:
-            'Preview requires @fumadocs/mdx-remote. Install it with: pnpm add @fumadocs/mdx-remote',
-        });
-        return;
-      }
-
       try {
         setPreview((prev) => ({ ...prev, status: 'loading' }));
 
-        const result = await compiler.compile({
-          source: debouncedContent,
-          components: mdxComponents,
+        // Fetch compiled MDX from server
+        const response = await fetch(previewEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: debouncedContent }),
         });
+
+        const data = await response.json();
 
         if (cancelled) return;
 
-        const rendered = result.body({ components: mdxComponents });
+        if (!data.success) {
+          setPreview({
+            status: 'error',
+            error: data.error || 'Compilation failed',
+          });
+          return;
+        }
+
+        // Execute the compiled MDX in the browser
+        const exports = await executeMdx(data.compiled, mdxComponents);
+        const rendered = exports.default({ components: mdxComponents });
 
         setPreview({
           status: 'ready',
           content: rendered,
-          frontmatter: result.frontmatter,
+          frontmatter: data.frontmatter,
         });
       } catch (error) {
         if (cancelled) return;
@@ -176,7 +180,7 @@ function PreviewPanel({
     return () => {
       cancelled = true;
     };
-  }, [debouncedContent, mdxComponents]);
+  }, [debouncedContent, mdxComponents, previewEndpoint]);
 
   return (
     <div
@@ -334,6 +338,7 @@ function MDXEditorComponent({
   mdxComponents,
   initialViewMode = 'split',
   enablePreview = true,
+  previewEndpoint = '/api/fumadocs-edit/preview',
 }: EditorComponentProps): ReactNode {
   const [isLoaded, setIsLoaded] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -347,19 +352,8 @@ function MDXEditorComponent({
   const [viewMode, setViewMode] = useState<EditorViewMode>(
     enablePreview ? initialViewMode : 'editor',
   );
-  const [previewAvailable, setPreviewAvailable] = useState(false);
-
-  // Check if preview is available (mdx-remote installed)
-  useEffect(() => {
-    if (enablePreview) {
-      loadMDXCompiler().then((compiler) => {
-        setPreviewAvailable(!!compiler);
-        if (!compiler) {
-          setViewMode('editor');
-        }
-      });
-    }
-  }, [enablePreview]);
+  // Preview is available if enablePreview is true (server will handle errors)
+  const previewAvailable = enablePreview;
 
   // Load MDXEditor on mount
   useEffect(() => {
@@ -593,6 +587,7 @@ function MDXEditorComponent({
             <PreviewPanel
               content={currentContent}
               mdxComponents={previewComponents}
+              previewEndpoint={previewEndpoint}
             />
           </div>
         )}
