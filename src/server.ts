@@ -208,3 +208,123 @@ export function createNextReadHandler() {
     });
   };
 }
+
+export interface PreviewRequest {
+  /** MDX content to compile */
+  source: string;
+}
+
+export interface PreviewResponse {
+  success: boolean;
+  /** Compiled JavaScript code (function-body format) */
+  compiled?: string;
+  /** Parsed frontmatter */
+  frontmatter?: Record<string, unknown>;
+  /** Error message if compilation failed */
+  error?: string;
+}
+
+// Cached compiler instance
+let compilerInstance: {
+  compile: (options: { source: string }) => Promise<{
+    compiled: string;
+    frontmatter: Record<string, unknown>;
+  }>;
+} | null = null;
+
+async function getCompiler() {
+  if (compilerInstance) return compilerInstance;
+
+  try {
+    const mod = await import('@fumadocs/mdx-remote');
+    compilerInstance = mod.createCompiler({
+      // Must use 'function-body' format for browser execution
+      outputFormat: 'function-body',
+      development: true,
+    });
+    return compilerInstance;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compile MDX content for preview.
+ * Returns compiled JavaScript that can be executed in the browser.
+ */
+export async function compileForPreview(
+  source: string,
+): Promise<PreviewResponse> {
+  const compiler = await getCompiler();
+
+  if (!compiler) {
+    return {
+      success: false,
+      error:
+        'Preview requires @fumadocs/mdx-remote. Install it with: pnpm add @fumadocs/mdx-remote',
+    };
+  }
+
+  try {
+    const result = await compiler.compile({ source });
+    return {
+      success: true,
+      compiled: result.compiled,
+      frontmatter: result.frontmatter,
+    };
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    return {
+      success: false,
+      error: err.message ?? 'Compilation failed',
+    };
+  }
+}
+
+/**
+ * Create a Next.js POST handler for compiling MDX for preview.
+ * This allows the editor to show a live preview without bundling
+ * the MDX compiler in the client.
+ *
+ * Usage in app/api/fumadocs-edit/preview/route.ts:
+ *
+ * import { createNextPreviewHandler } from 'fumadocs-editor/server';
+ * export const POST = createNextPreviewHandler();
+ */
+export function createNextPreviewHandler() {
+  return async (request: Request): Promise<Response> => {
+    if (process.env.NODE_ENV !== 'development') {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Preview only available in development',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    try {
+      const body = (await request.json()) as PreviewRequest;
+
+      if (!body.source) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Missing source' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+
+      const result = await compileForPreview(body.source);
+
+      return new Response(JSON.stringify(result), {
+        status: result.success ? 200 : 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      return new Response(
+        JSON.stringify({ success: false, error: err.message }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+  };
+}

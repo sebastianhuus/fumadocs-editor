@@ -8,7 +8,8 @@ import {
   useEffect,
   type ReactNode,
 } from 'react';
-import type { EditMetadata, EditorAdapter, JsxComponentDescriptor } from '../types.js';
+import type { ComponentType } from 'react';
+import type { EditMetadata, EditorAdapter, EditorViewMode, JsxComponentDescriptor } from '../types.js';
 import { EditModal } from './EditModal.js';
 
 interface EditorContextValue {
@@ -30,6 +31,32 @@ export interface EditorProviderProps {
 
   /** JSX component descriptors for custom components */
   jsxComponentDescriptors?: JsxComponentDescriptor[];
+
+  /**
+   * Custom MDX components to use in the preview panel.
+   * These should match the components used in your actual MDX rendering.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mdxComponents?: Record<string, ComponentType<any>>;
+
+  /**
+   * Initial view mode for the editor
+   * @default "split"
+   */
+  initialViewMode?: EditorViewMode;
+
+  /**
+   * Whether to enable the live preview panel.
+   * Requires @fumadocs/mdx-remote to be installed.
+   * @default true
+   */
+  enablePreview?: boolean;
+
+  /**
+   * API endpoint for preview compilation.
+   * @default "/api/fumadocs-edit/preview"
+   */
+  previewEndpoint?: string;
 
   /**
    * Position of the floating edit button
@@ -78,6 +105,10 @@ export function EditorProvider({
   children,
   adapter,
   jsxComponentDescriptors,
+  mdxComponents,
+  initialViewMode = 'split',
+  enablePreview = true,
+  previewEndpoint = '/api/fumadocs-edit/preview',
   buttonPosition = 'bottom-right',
   buttonStyle,
   buttonClassName,
@@ -147,6 +178,10 @@ export function EditorProvider({
           editMetadata={editMetadata}
           adapter={adapter}
           jsxComponentDescriptors={jsxComponentDescriptors}
+          mdxComponents={mdxComponents}
+          initialViewMode={initialViewMode}
+          enablePreview={enablePreview}
+          previewEndpoint={previewEndpoint}
           onClose={() => setIsEditorOpen(false)}
         />
       )}

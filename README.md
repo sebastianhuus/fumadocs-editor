@@ -8,6 +8,8 @@ Edit your documentation directly in the browser during development. Changes are 
 
 - **In-browser editing** - Edit MDX files without leaving your browser
 - **WYSIWYG + Source mode** - Toggle between rich text and raw markdown
+- **Live MDX preview** - Split view with real-time MDX compilation using Fumadocs' compiler
+- **Frontmatter editing** - Edit title, description, and other frontmatter via form dialog
 - **MDX validation** - Validates content before saving to prevent broken pages
 - **Hot reload** - Changes automatically reload the page
 - **Dev-only** - Only enabled in development mode for security
@@ -21,9 +23,14 @@ pnpm add github:sebastianhuus/fumadocs-editor
 
 # Install the recommended editor (MDXEditor)
 pnpm add @mdxeditor/editor
+
+# Optional: Install for live MDX preview
+pnpm add @fumadocs/mdx-remote
 ```
 
 > **Note:** We recommend [MDXEditor](https://mdxeditor.dev/) as the default editor. It provides WYSIWYG editing with source mode toggle, and has excellent MDX support including custom JSX components.
+
+> **Live Preview:** For the live MDX preview feature (split view), install `@fumadocs/mdx-remote`. This uses Fumadocs' MDX compiler to render your content in real-time, including JSX components.
 
 ## Quick Setup
 
@@ -41,7 +48,7 @@ export const source = loader({
 });
 ```
 
-### 2. Create the API route
+### 2. Create the API routes
 
 Create `app/api/fumadocs-edit/route.ts`:
 
@@ -51,6 +58,16 @@ import { createNextHandler, createNextReadHandler } from 'fumadocs-editor/server
 export const GET = createNextReadHandler();
 export const POST = createNextHandler();
 ```
+
+Create `app/api/fumadocs-edit/preview/route.ts` (for live preview):
+
+```ts
+import { createNextPreviewHandler } from 'fumadocs-editor/server';
+
+export const POST = createNextPreviewHandler();
+```
+
+> **Note:** The preview route requires `@fumadocs/mdx-remote` to be installed. Without it, preview will show an error message.
 
 ### 3. Create an editor provider wrapper
 
@@ -154,7 +171,10 @@ Click the button to open the editor. Make changes, then click **Save** to write 
 ```tsx
 <EditorProvider
   adapter={mdxEditorAdapter}           // Required: editor adapter
-  jsxComponentDescriptors={[...]}      // Optional: custom component definitions
+  jsxComponentDescriptors={[...]}      // Optional: custom component definitions for editor
+  mdxComponents={{ Callout, Tabs }}    // Optional: components for live preview rendering
+  enablePreview={true}                  // Optional: enable live preview (default: true)
+  initialViewMode="split"               // Optional: 'editor' | 'preview' | 'split' (default: 'split')
   buttonPosition="bottom-right"         // Optional: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
   buttonStyle={{ ... }}                 // Optional: custom button styles
   buttonClassName="my-class"            // Optional: custom button class
@@ -173,6 +193,10 @@ import { EditorProvider } from 'fumadocs-editor/components';
 import { mdxEditorAdapter } from 'fumadocs-editor/adapters/mdx-editor';
 import '@mdxeditor/editor/style.css';
 
+// Import your custom components for preview
+import { Callout, Tabs, Tab } from 'fumadocs-ui/components';
+
+// Descriptors tell the WYSIWYG editor how to handle JSX components
 const jsxComponentDescriptors = [
   {
     name: 'Callout',
@@ -190,17 +214,43 @@ const jsxComponentDescriptors = [
   },
 ];
 
+// Components map for live preview rendering
+const mdxComponents = { Callout, Tabs, Tab };
+
 export function EditorProviderWrapper({ children }: { children: React.ReactNode }) {
   return (
     <EditorProvider
       adapter={mdxEditorAdapter}
       jsxComponentDescriptors={jsxComponentDescriptors}
+      mdxComponents={mdxComponents}
+      enablePreview={true}
+      initialViewMode="split"
     >
       {children}
     </EditorProvider>
   );
 }
 ```
+
+### Live Preview
+
+The editor supports three view modes:
+
+- **Editor** - WYSIWYG editor only
+- **Preview** - Live MDX preview only
+- **Split** - Side-by-side editor and preview (default)
+
+Toggle between modes using the buttons in the footer. The preview compiles your MDX in real-time using Fumadocs' compiler, so your custom components will render correctly.
+
+> **Note:** Live preview requires `@fumadocs/mdx-remote` to be installed. Without it, only the Editor mode is available.
+
+### Frontmatter Editing
+
+Click the **Frontmatter** button in the toolbar to edit page metadata (title, description, etc.) via a form dialog. The frontmatter is displayed as a key-value form where you can add, edit, or remove fields.
+
+You can also view frontmatter in:
+- **Source mode** - Toggle to see raw YAML frontmatter at the top of the file
+- **Preview panel** - Frontmatter is displayed as a summary card
 
 ### Plugin Options
 

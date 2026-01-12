@@ -4,12 +4,14 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import type {
   EditorAdapter,
   EditorComponentProps,
+  EditorViewMode,
   JsxComponentDescriptor as FumadocsJsxDescriptor,
 } from '../types.js';
 
@@ -21,7 +23,6 @@ interface MDXEditorMethods {
 }
 
 // Lazy load MDXEditor module to avoid SSR issues and reduce bundle size
-// Using `any` for the module type since we're dynamically importing
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let MDXEditorModule: any = null;
 
@@ -30,6 +31,39 @@ async function loadMDXEditor(): Promise<typeof import('@mdxeditor/editor')> {
     MDXEditorModule = await import('@mdxeditor/editor');
   }
   return MDXEditorModule;
+}
+
+// Get the JSX runtime for executing compiled MDX
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let jsxRuntime: any = null;
+
+async function getJsxRuntime() {
+  if (jsxRuntime) return jsxRuntime;
+  // Use jsx-dev-runtime since server compiles with development: true
+  jsxRuntime = await import('react/jsx-dev-runtime');
+  return jsxRuntime;
+}
+
+// Execute compiled MDX code in the browser
+// Based on @fumadocs/mdx-remote's executeMdx
+async function executeMdx(
+  compiled: string,
+  components?: Record<string, unknown>,
+): Promise<{ default: (props: { components?: Record<string, unknown> }) => ReactNode }> {
+  const runtime = await getJsxRuntime();
+
+  const fullScope = {
+    opts: {
+      ...runtime,
+    },
+    ...components,
+  };
+
+  // Create an async function from the compiled MDX code
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  const hydrateFn = new AsyncFunction(...Object.keys(fullScope), compiled);
+
+  return await hydrateFn.apply(hydrateFn, Object.values(fullScope));
 }
 
 /**
@@ -57,11 +91,250 @@ function convertJsxDescriptors(
   }));
 }
 
+/**
+ * Debounce hook
+ */
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+/**
+ * Preview panel component that compiles and renders MDX via server API
+ */
+function PreviewPanel({
+  content,
+  mdxComponents,
+  previewEndpoint,
+}: {
+  content: string;
+  mdxComponents?: Record<string, unknown>;
+  previewEndpoint: string;
+}): ReactNode {
+  const [preview, setPreview] = useState<{
+    status: 'loading' | 'ready' | 'error';
+    content?: ReactNode;
+    frontmatter?: Record<string, unknown>;
+    error?: string;
+  }>({ status: 'loading' });
+
+  const debouncedContent = useDebounce(content, 300);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function compile() {
+      try {
+        setPreview((prev) => ({ ...prev, status: 'loading' }));
+
+        // Fetch compiled MDX from server
+        const response = await fetch(previewEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: debouncedContent }),
+        });
+
+        const data = await response.json();
+
+        if (cancelled) return;
+
+        if (!data.success) {
+          setPreview({
+            status: 'error',
+            error: data.error || 'Compilation failed',
+          });
+          return;
+        }
+
+        // Execute the compiled MDX in the browser
+        const exports = await executeMdx(data.compiled, mdxComponents);
+        const rendered = exports.default({ components: mdxComponents });
+
+        setPreview({
+          status: 'ready',
+          content: rendered,
+          frontmatter: data.frontmatter,
+        });
+      } catch (error) {
+        if (cancelled) return;
+
+        setPreview({
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Compilation failed',
+        });
+      }
+    }
+
+    compile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedContent, mdxComponents, previewEndpoint]);
+
+  return (
+    <div
+      style={{
+        height: '100%',
+        overflow: 'auto',
+        padding: '16px 24px',
+        backgroundColor: 'var(--fd-background, #fff)',
+      }}
+    >
+      {preview.status === 'loading' && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            color: 'var(--fd-muted-foreground, #6b7280)',
+          }}
+        >
+          <LoadingSpinner size={16} />
+          <span style={{ marginLeft: '8px' }}>Compiling...</span>
+        </div>
+      )}
+
+      {preview.status === 'error' && (
+        <div
+          style={{
+            padding: '12px',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '6px',
+            color: '#dc2626',
+            fontSize: '14px',
+            whiteSpace: 'pre-wrap',
+            fontFamily: 'monospace',
+          }}
+        >
+          {preview.error}
+        </div>
+      )}
+
+      {preview.status === 'ready' && (
+        <div className="fd-mdx-preview-content">
+          {/* Render title and description like Fumadocs DocsTitle/DocsDescription */}
+          {preview.frontmatter?.title && (
+            <h1
+              style={{
+                fontSize: '1.875rem',
+                fontWeight: 600,
+                lineHeight: 1.2,
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              {String(preview.frontmatter.title)}
+            </h1>
+          )}
+          {preview.frontmatter?.description && (
+            <p
+              style={{
+                fontSize: '1.125rem',
+                color: 'var(--fd-muted-foreground, #6b7280)',
+                marginTop: 0,
+                marginBottom: '2rem',
+              }}
+            >
+              {String(preview.frontmatter.description)}
+            </p>
+          )}
+          {preview.content}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * View mode toggle buttons
+ */
+function ViewModeToggle({
+  viewMode,
+  onChange,
+  previewAvailable,
+}: {
+  viewMode: EditorViewMode;
+  onChange: (mode: EditorViewMode) => void;
+  previewAvailable: boolean;
+}): ReactNode {
+  const buttonStyle = (active: boolean) => ({
+    padding: '4px 8px',
+    border: 'none',
+    borderRadius: '4px',
+    backgroundColor: active ? 'var(--fd-primary, #3b82f6)' : 'transparent',
+    color: active ? 'white' : 'var(--fd-foreground, #1f2937)',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: 500,
+    transition: 'background-color 0.15s',
+  });
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '2px',
+        padding: '2px',
+        backgroundColor: 'var(--fd-muted, #f3f4f6)',
+        borderRadius: '6px',
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onChange('editor')}
+        style={buttonStyle(viewMode === 'editor')}
+        title="Editor only"
+      >
+        Editor
+      </button>
+      {previewAvailable && (
+        <>
+          <button
+            type="button"
+            onClick={() => onChange('split')}
+            style={buttonStyle(viewMode === 'split')}
+            title="Split view"
+          >
+            Split
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange('preview')}
+            style={buttonStyle(viewMode === 'preview')}
+            title="Preview only"
+          >
+            Preview
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function MDXEditorComponent({
   initialContent,
   onSave,
   onCancel,
   jsxComponentDescriptors,
+  mdxComponents,
+  initialViewMode = 'split',
+  enablePreview = true,
+  previewEndpoint = '/api/fumadocs-edit/preview',
 }: EditorComponentProps): ReactNode {
   const [isLoaded, setIsLoaded] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,6 +344,12 @@ function MDXEditorComponent({
   const editorRef = useRef<MDXEditorMethods>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentContent, setCurrentContent] = useState(initialContent);
+  const [viewMode, setViewMode] = useState<EditorViewMode>(
+    enablePreview ? initialViewMode : 'editor',
+  );
+  // Preview is available if enablePreview is true (server will handle errors)
+  const previewAvailable = enablePreview;
 
   // Load MDXEditor on mount
   useEffect(() => {
@@ -109,6 +388,7 @@ function MDXEditorComponent({
           InsertCodeBlock,
           DiffSourceToggleWrapper,
           Separator,
+          InsertFrontmatter,
         } = mod;
 
         // Convert JSX component descriptors to MDXEditor format
@@ -154,6 +434,8 @@ function MDXEditorComponent({
           toolbarPlugin({
             toolbarContents: () => (
               <DiffSourceToggleWrapper>
+                <InsertFrontmatter />
+                <Separator />
                 <UndoRedo />
                 <Separator />
                 <BoldItalicUnderlineToggles />
@@ -199,6 +481,9 @@ function MDXEditorComponent({
 
   const handleChange = useCallback(() => {
     setHasChanges(true);
+    if (editorRef.current) {
+      setCurrentContent(editorRef.current.getMarkdown());
+    }
   }, []);
 
   // Handle keyboard shortcuts
@@ -217,6 +502,12 @@ function MDXEditorComponent({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [hasChanges, isSaving, handleSave]);
 
+  // Memoize mdxComponents for preview
+  const previewComponents = useMemo(
+    () => mdxComponents ?? {},
+    [mdxComponents],
+  );
+
   if (!isLoaded || !EditorComponent) {
     return (
       <div
@@ -234,6 +525,9 @@ function MDXEditorComponent({
     );
   }
 
+  const showEditor = viewMode === 'editor' || viewMode === 'split';
+  const showPreview = viewMode === 'preview' || viewMode === 'split';
+
   return (
     <div
       style={{
@@ -243,24 +537,59 @@ function MDXEditorComponent({
         minHeight: 0,
       }}
     >
-      {/* Editor */}
+      {/* Main content area */}
       <div
         style={{
           flex: 1,
-          overflow: 'auto',
+          display: 'flex',
           minHeight: 0,
+          overflow: 'hidden',
         }}
       >
-        <EditorComponent
-          ref={editorRef}
-          markdown={initialContent}
-          plugins={plugins}
-          onChange={handleChange}
-          contentEditableClassName="fd-mdx-editor-content"
-        />
+        {/* Editor panel */}
+        {showEditor && (
+          <div
+            style={{
+              flex: viewMode === 'split' ? 1 : 'auto',
+              width: viewMode === 'editor' ? '100%' : undefined,
+              overflow: 'auto',
+              minWidth: 0,
+              borderRight:
+                viewMode === 'split'
+                  ? '1px solid var(--fd-border, #e5e7eb)'
+                  : undefined,
+            }}
+          >
+            <EditorComponent
+              ref={editorRef}
+              markdown={initialContent}
+              plugins={plugins}
+              onChange={handleChange}
+              contentEditableClassName="fd-mdx-editor-content"
+            />
+          </div>
+        )}
+
+        {/* Preview panel */}
+        {showPreview && previewAvailable && (
+          <div
+            style={{
+              flex: viewMode === 'split' ? 1 : 'auto',
+              width: viewMode === 'preview' ? '100%' : undefined,
+              overflow: 'auto',
+              minWidth: 0,
+            }}
+          >
+            <PreviewPanel
+              content={currentContent}
+              mdxComponents={previewComponents}
+              previewEndpoint={previewEndpoint}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Footer with save/cancel buttons */}
+      {/* Footer with view toggle and save/cancel buttons */}
       <div
         style={{
           display: 'flex',
@@ -274,20 +603,38 @@ function MDXEditorComponent({
       >
         <div
           style={{
-            fontSize: '12px',
-            color: 'var(--fd-muted-foreground, #6b7280)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
           }}
         >
-          {hasChanges ? (
-            <span style={{ color: 'var(--fd-warning, #f59e0b)' }}>
-              Unsaved changes
-            </span>
-          ) : (
-            <span>No changes</span>
+          {/* View mode toggle */}
+          {enablePreview && (
+            <ViewModeToggle
+              viewMode={viewMode}
+              onChange={setViewMode}
+              previewAvailable={previewAvailable}
+            />
           )}
-          <span style={{ marginLeft: '8px', opacity: 0.7 }}>
-            Press Cmd/Ctrl+S to save
-          </span>
+
+          {/* Status */}
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'var(--fd-muted-foreground, #6b7280)',
+            }}
+          >
+            {hasChanges ? (
+              <span style={{ color: 'var(--fd-warning, #f59e0b)' }}>
+                Unsaved changes
+              </span>
+            ) : (
+              <span>No changes</span>
+            )}
+            <span style={{ marginLeft: '8px', opacity: 0.7 }}>
+              Press Cmd/Ctrl+S to save
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -343,8 +690,78 @@ function MDXEditorComponent({
         .fd-mdx-editor-content:focus {
           outline: none;
         }
-        /* Import MDXEditor styles - must be done via CSS import in consuming app */
-        /* @import '@mdxeditor/editor/style.css'; */
+        .fd-mdx-preview-content {
+          font-family: var(--fd-font-family, system-ui, sans-serif);
+          line-height: 1.7;
+        }
+        .fd-mdx-preview-content h1 {
+          font-size: 2em;
+          font-weight: 700;
+          margin-top: 0;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-preview-content h2 {
+          font-size: 1.5em;
+          font-weight: 600;
+          margin-top: 1.5em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-preview-content h3 {
+          font-size: 1.25em;
+          font-weight: 600;
+          margin-top: 1.25em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-preview-content p {
+          margin: 1em 0;
+        }
+        .fd-mdx-preview-content code {
+          background: var(--fd-muted, #f3f4f6);
+          padding: 0.2em 0.4em;
+          border-radius: 4px;
+          font-size: 0.9em;
+        }
+        .fd-mdx-preview-content pre {
+          background: var(--fd-muted, #f3f4f6);
+          padding: 1em;
+          border-radius: 6px;
+          overflow-x: auto;
+        }
+        .fd-mdx-preview-content pre code {
+          background: none;
+          padding: 0;
+        }
+        .fd-mdx-preview-content ul, .fd-mdx-preview-content ol {
+          margin: 1em 0;
+          padding-left: 1.5em;
+        }
+        .fd-mdx-preview-content li {
+          margin: 0.25em 0;
+        }
+        .fd-mdx-preview-content blockquote {
+          border-left: 4px solid var(--fd-border, #e5e7eb);
+          padding-left: 1em;
+          margin: 1em 0;
+          color: var(--fd-muted-foreground, #6b7280);
+        }
+        .fd-mdx-preview-content a {
+          color: var(--fd-primary, #3b82f6);
+          text-decoration: underline;
+        }
+        .fd-mdx-preview-content table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 1em 0;
+        }
+        .fd-mdx-preview-content th, .fd-mdx-preview-content td {
+          border: 1px solid var(--fd-border, #e5e7eb);
+          padding: 0.5em 1em;
+          text-align: left;
+        }
+        .fd-mdx-preview-content th {
+          background: var(--fd-muted, #f3f4f6);
+          font-weight: 600;
+        }
       `}</style>
     </div>
   );
@@ -386,10 +803,21 @@ function LoadingSpinner({ size = 20 }: { size?: number }): ReactNode {
  * It includes commonly used plugins for headings, lists, code blocks, tables,
  * images, links, and frontmatter.
  *
+ * Features:
+ * - Split view with live MDX preview (requires @fumadocs/mdx-remote)
+ * - Frontmatter editing via form dialog
+ * - Toggle between editor, preview, and split modes
+ * - Real-time compilation with error display
+ *
  * @remarks
  * Make sure to import the MDXEditor styles in your application:
  * ```tsx
  * import '@mdxeditor/editor/style.css';
+ * ```
+ *
+ * For live preview, install @fumadocs/mdx-remote:
+ * ```bash
+ * pnpm add @fumadocs/mdx-remote
  * ```
  *
  * @example
@@ -403,10 +831,11 @@ function LoadingSpinner({ size = 20 }: { size?: number }): ReactNode {
  * />
  * ```
  *
- * @example With custom JSX components
+ * @example With custom JSX components and preview
  * ```tsx
  * import { EditButton } from 'fumadocs-editor/components';
  * import { mdxEditorAdapter } from 'fumadocs-editor/adapters/mdx-editor';
+ * import { Callout, Tabs } from 'fumadocs-ui/components';
  *
  * const jsxComponentDescriptors = [
  *   {
@@ -420,10 +849,14 @@ function LoadingSpinner({ size = 20 }: { size?: number }): ReactNode {
  *   },
  * ];
  *
+ * const mdxComponents = { Callout, Tabs };
+ *
  * <EditButton
  *   editMetadata={page.data._edit}
  *   adapter={mdxEditorAdapter}
  *   jsxComponentDescriptors={jsxComponentDescriptors}
+ *   mdxComponents={mdxComponents}
+ *   enablePreview={true}
  * />
  * ```
  */

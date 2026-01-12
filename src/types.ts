@@ -1,6 +1,11 @@
 import type { ComponentType } from 'react';
 
 /**
+ * View mode for the editor
+ */
+export type EditorViewMode = 'editor' | 'preview' | 'split';
+
+/**
  * Result of validating MDX content
  */
 export interface ValidationResult {
@@ -36,6 +41,15 @@ export interface EditorComponentProps {
 
   /** JSX component descriptors for editors that support them (like MDXEditor) */
   jsxComponentDescriptors?: JsxComponentDescriptor[];
+
+  /** Initial view mode (editor, preview, or split) */
+  initialViewMode?: EditorViewMode;
+
+  /** Whether to enable live preview panel */
+  enablePreview?: boolean;
+
+  /** API endpoint for preview compilation (defaults to endpoint + '/preview') */
+  previewEndpoint?: string;
 }
 
 /**
@@ -98,7 +112,7 @@ export interface EditMetadata {
 export interface EditorPluginConfig {
   /** Enable/disable editor (defaults to NODE_ENV === 'development') */
   enabled?: boolean;
-  /** API endpoint path (defaults to '/__fumadocs/edit') */
+  /** API endpoint path (defaults to '/api/fumadocs-edit') */
   endpoint?: string;
   /** Editor adapter to use */
   adapter?: EditorAdapter;
@@ -107,5 +121,11 @@ export interface EditorPluginConfig {
   mdxComponents?: Record<string, ComponentType<any>>;
   /** JSX component descriptors for the editor */
   jsxComponentDescriptors?: JsxComponentDescriptor[];
+  /** Initial view mode for the editor */
+  initialViewMode?: EditorViewMode;
+  /** Whether to enable live preview panel (requires @fumadocs/mdx-remote) */
+  enablePreview?: boolean;
+  /** API endpoint for preview compilation (defaults to endpoint + '/preview') */
+  previewEndpoint?: string;
 }
 

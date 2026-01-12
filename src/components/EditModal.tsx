@@ -1,9 +1,10 @@
 'use client';
 
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ComponentType, type ReactNode, useCallback, useEffect, useState } from 'react';
 import type {
   EditMetadata,
   EditorAdapter,
+  EditorViewMode,
   JsxComponentDescriptor,
   ValidationResult,
 } from '../types.js';
@@ -17,6 +18,19 @@ export interface EditModalProps {
 
   /** JSX component descriptors for the editor */
   jsxComponentDescriptors?: JsxComponentDescriptor[];
+
+  /** Custom MDX components for preview */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mdxComponents?: Record<string, ComponentType<any>>;
+
+  /** Initial view mode */
+  initialViewMode?: EditorViewMode;
+
+  /** Whether to enable preview */
+  enablePreview?: boolean;
+
+  /** API endpoint for preview compilation */
+  previewEndpoint?: string;
 
   /** Called when the modal should close */
   onClose: () => void;
@@ -37,6 +51,10 @@ export function EditModal({
   editMetadata,
   adapter,
   jsxComponentDescriptors,
+  mdxComponents,
+  initialViewMode,
+  enablePreview,
+  previewEndpoint,
   onClose,
 }: EditModalProps): ReactNode {
   const [state, setState] = useState<ModalState>({
@@ -236,6 +254,10 @@ export function EditModal({
             initialContent={state.content}
             filePath={editMetadata.absolutePath}
             jsxComponentDescriptors={jsxComponentDescriptors}
+            mdxComponents={mdxComponents}
+            initialViewMode={initialViewMode}
+            enablePreview={enablePreview}
+            previewEndpoint={previewEndpoint}
             onSave={handleSave}
             onCancel={onClose}
           />
