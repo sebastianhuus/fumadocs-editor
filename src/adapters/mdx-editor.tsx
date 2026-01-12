@@ -109,6 +109,7 @@ function MDXEditorComponent({
           InsertCodeBlock,
           DiffSourceToggleWrapper,
           Separator,
+          InsertFrontmatter,
         } = mod;
 
         // Convert JSX component descriptors to MDXEditor format
@@ -154,6 +155,8 @@ function MDXEditorComponent({
           toolbarPlugin({
             toolbarContents: () => (
               <DiffSourceToggleWrapper>
+                <InsertFrontmatter />
+                <Separator />
                 <UndoRedo />
                 <Separator />
                 <BoldItalicUnderlineToggles />
