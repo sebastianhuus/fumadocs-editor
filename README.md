@@ -19,7 +19,7 @@ Edit your documentation directly in the browser during development. Changes are 
 
 ```bash
 # Install the editor package
-pnpm add github:sebastianhuus/fumadocs-editor
+pnpm add fumadocs-editor
 
 # Install the recommended editor (MDXEditor)
 pnpm add @mdxeditor/editor
