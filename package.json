@@ -13,7 +13,7 @@
   "author": "Sebastian Huus",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sebastianhuus/fumadocs-editor.git"
+    "url": "git+https://github.com/sebastianhuus/fumadocs-editor.git"
   },
   "files": [
     "dist/*"
