@@ -226,37 +226,32 @@ function PreviewPanel({
 
       {preview.status === 'ready' && (
         <div className="fd-mdx-preview-content">
-          {/* Show frontmatter if present */}
-          {preview.frontmatter &&
-            Object.keys(preview.frontmatter).length > 0 && (
-              <div
-                style={{
-                  marginBottom: '16px',
-                  padding: '12px',
-                  backgroundColor: 'var(--fd-muted, #f3f4f6)',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: 600,
-                    marginBottom: '8px',
-                    color: 'var(--fd-muted-foreground, #6b7280)',
-                  }}
-                >
-                  Frontmatter
-                </div>
-                {Object.entries(preview.frontmatter).map(([key, value]) => (
-                  <div key={key} style={{ marginTop: '4px' }}>
-                    <span style={{ color: 'var(--fd-primary, #3b82f6)' }}>
-                      {key}:
-                    </span>{' '}
-                    <span>{String(value)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Render title and description like Fumadocs DocsTitle/DocsDescription */}
+          {preview.frontmatter?.title && (
+            <h1
+              style={{
+                fontSize: '1.875rem',
+                fontWeight: 600,
+                lineHeight: 1.2,
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              {String(preview.frontmatter.title)}
+            </h1>
+          )}
+          {preview.frontmatter?.description && (
+            <p
+              style={{
+                fontSize: '1.125rem',
+                color: 'var(--fd-muted-foreground, #6b7280)',
+                marginTop: 0,
+                marginBottom: '2rem',
+              }}
+            >
+              {String(preview.frontmatter.description)}
+            </p>
+          )}
           {preview.content}
         </div>
       )}
