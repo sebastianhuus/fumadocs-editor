@@ -39,7 +39,8 @@ let jsxRuntime: any = null;
 
 async function getJsxRuntime() {
   if (jsxRuntime) return jsxRuntime;
-  jsxRuntime = await import('react/jsx-runtime');
+  // Use jsx-dev-runtime since server compiles with development: true
+  jsxRuntime = await import('react/jsx-dev-runtime');
   return jsxRuntime;
 }
 
