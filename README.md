@@ -11,16 +11,21 @@ Edit your documentation directly in the browser during development. Changes are 
 - **MDX validation** - Validates content before saving to prevent broken pages
 - **Hot reload** - Changes automatically reload the page
 - **Dev-only** - Only enabled in development mode for security
-- **Editor-agnostic** - Swap in different editors (MDXEditor, CodeMirror, Monaco)
-- **Custom component support** - Register your custom MDX components
+- **Editor-agnostic** - Swap in different editors (default: MDXEditor)
 
 ## Installation
 
 ```bash
+# Install the editor package
 pnpm add github:sebastianhuus/fumadocs-editor
+
+# Install the recommended editor (MDXEditor)
+pnpm add @mdxeditor/editor
 ```
 
-## Setup
+> **Note:** We recommend [MDXEditor](https://mdxeditor.dev/) as the default editor. It provides WYSIWYG editing with source mode toggle, and has excellent MDX support including custom JSX components.
+
+## Quick Setup
 
 ### 1. Add the loader plugin
 
@@ -47,49 +52,100 @@ export const GET = createNextReadHandler();
 export const POST = createNextHandler();
 ```
 
-### 3. Add the EditorProvider
+### 3. Create an editor provider wrapper
 
-Wrap your root layout with the provider (`app/layout.tsx`):
+Create `components/providers/editor-provider.tsx`:
 
 ```tsx
+'use client';
+
 import { EditorProvider } from 'fumadocs-editor/components';
 import { mdxEditorAdapter } from 'fumadocs-editor/adapters/mdx-editor';
 import '@mdxeditor/editor/style.css';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export function EditorProviderWrapper({ children }: { children: React.ReactNode }) {
+  return <EditorProvider adapter={mdxEditorAdapter}>{children}</EditorProvider>;
+}
+```
+
+### 4. Add to your layout
+
+Update your root layout (`app/layout.tsx`). Add the `EditorProviderWrapper` **inside** your existing providers:
+
+```tsx
+import { RootProvider } from 'fumadocs-ui/provider/next';
+import { EditorProviderWrapper } from '@/components/providers/editor-provider';
+
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <EditorProvider adapter={mdxEditorAdapter}>
-          {children}
-        </EditorProvider>
+        {/* Keep your existing providers */}
+        <RootProvider>
+          {/* Add EditorProviderWrapper inside */}
+          <EditorProviderWrapper>
+            {children}
+          </EditorProviderWrapper>
+        </RootProvider>
       </body>
     </html>
   );
 }
 ```
 
-### 4. Register editable pages
+> **Important:** Keep your existing `RootProvider` from Fumadocs. The `EditorProviderWrapper` should be nested inside it.
 
-In your docs page component, register the page as editable:
+### 5. Register editable pages
+
+Create a small client component to register pages as editable.
+
+Create `app/docs/[[...slug]]/EditorRegister.tsx`:
 
 ```tsx
 'use client';
 
 import { useRegisterEditable } from 'fumadocs-editor/components';
-import { source } from '@/lib/source';
+import type { EditMetadata } from 'fumadocs-editor';
 
-export default function Page({ params }: { params: { slug?: string[] } }) {
-  const page = source.getPage(params.slug);
-  useRegisterEditable(page?.data._edit);
-
-  return (
-    // Your page content
-  );
+export function EditorRegister({ editMetadata }: { editMetadata?: EditMetadata }) {
+  useRegisterEditable(editMetadata);
+  return null;
 }
 ```
 
-A floating "Edit Page" button will appear in the bottom-right corner when viewing editable pages in development mode.
+Then use it in your docs page (`app/docs/[[...slug]]/page.tsx`):
+
+```tsx
+import { source } from '@/lib/source';
+import { EditorRegister } from './EditorRegister';
+
+export default async function Page({ params }: { params: { slug?: string[] } }) {
+  const page = source.getPage(params.slug);
+  if (!page) notFound();
+
+  return (
+    <>
+      <EditorRegister editMetadata={page.data._edit} />
+      <DocsPage>
+        {/* Your page content */}
+      </DocsPage>
+    </>
+  );
+}
+
+// Keep your generateStaticParams and generateMetadata as-is
+export async function generateStaticParams() {
+  return source.generateParams();
+}
+```
+
+> **Note:** The `EditorRegister` component must be a separate client component because your page needs to remain a server component to export `generateStaticParams` and `generateMetadata`.
+
+## Usage
+
+Once set up, a floating **"Edit Page"** button will appear in the bottom-right corner when viewing any editable page in development mode (`pnpm dev`).
+
+Click the button to open the editor. Make changes, then click **Save** to write the file to disk. The page will automatically hot-reload with your changes.
 
 ## Configuration
 
@@ -99,7 +155,7 @@ A floating "Edit Page" button will appear in the bottom-right corner when viewin
 <EditorProvider
   adapter={mdxEditorAdapter}           // Required: editor adapter
   jsxComponentDescriptors={[...]}      // Optional: custom component definitions
-  buttonPosition="bottom-right"         // Optional: button position
+  buttonPosition="bottom-right"         // Optional: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
   buttonStyle={{ ... }}                 // Optional: custom button styles
   buttonClassName="my-class"            // Optional: custom button class
 >
@@ -107,9 +163,16 @@ A floating "Edit Page" button will appear in the bottom-right corner when viewin
 
 ### Custom JSX Components
 
-If you have custom MDX components (like `<Callout>`, `<Tabs>`, etc.), you can register them so the editor knows how to handle them:
+If you have custom MDX components (like `<Callout>`, `<Tabs>`, etc.), register them so the editor can handle them:
 
 ```tsx
+// components/providers/editor-provider.tsx
+'use client';
+
+import { EditorProvider } from 'fumadocs-editor/components';
+import { mdxEditorAdapter } from 'fumadocs-editor/adapters/mdx-editor';
+import '@mdxeditor/editor/style.css';
+
 const jsxComponentDescriptors = [
   {
     name: 'Callout',
@@ -127,13 +190,19 @@ const jsxComponentDescriptors = [
   },
 ];
 
-<EditorProvider
-  adapter={mdxEditorAdapter}
-  jsxComponentDescriptors={jsxComponentDescriptors}
->
+export function EditorProviderWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <EditorProvider
+      adapter={mdxEditorAdapter}
+      jsxComponentDescriptors={jsxComponentDescriptors}
+    >
+      {children}
+    </EditorProvider>
+  );
+}
 ```
 
-### Plugin Configuration
+### Plugin Options
 
 ```ts
 editorPlugin({
@@ -148,38 +217,31 @@ editorPlugin({
 
 | Export | Description |
 |--------|-------------|
-| `fumadocs-editor/plugin` | Loader plugin for injecting edit metadata |
+| `fumadocs-editor` | Type definitions |
+| `fumadocs-editor/plugin` | Loader plugin |
 | `fumadocs-editor/server` | API route handlers |
 | `fumadocs-editor/components` | React components and hooks |
-| `fumadocs-editor/adapters/mdx-editor` | MDXEditor adapter |
+| `fumadocs-editor/adapters/mdx-editor` | MDXEditor adapter (recommended) |
 
-### Components
+### Components & Hooks
 
-| Component | Description |
-|-----------|-------------|
-| `EditorProvider` | Context provider with floating edit button |
-| `EditButton` | Standalone edit button (alternative to provider) |
-| `EditModal` | Editor modal (used internally) |
-
-### Hooks
-
-| Hook | Description |
+| Name | Description |
 |------|-------------|
+| `EditorProvider` | Context provider with floating edit button |
 | `useRegisterEditable(metadata)` | Register a page as editable |
-| `useEditor()` | Access editor context (open editor, get metadata) |
+| `useEditor()` | Access editor context |
+| `EditButton` | Standalone edit button (alternative to provider) |
 
 ### Server Functions
 
 | Function | Description |
 |----------|-------------|
-| `createNextHandler()` | Creates POST handler for saving files |
-| `createNextReadHandler()` | Creates GET handler for reading files |
-| `handleSaveRequest(req)` | Low-level save handler |
-| `validateMdxContent(content)` | Validate MDX syntax |
+| `createNextHandler()` | POST handler for saving files |
+| `createNextReadHandler()` | GET handler for reading files |
 
 ## Using a Different Editor
 
-The package is editor-agnostic. You can create your own adapter:
+The package is editor-agnostic. Create your own adapter:
 
 ```ts
 import type { EditorAdapter } from 'fumadocs-editor';
@@ -191,31 +253,47 @@ const myAdapter: EditorAdapter = {
     // Your editor implementation
   },
 };
-
-<EditorProvider adapter={myAdapter}>
 ```
 
 ## Security
 
-- **Dev-only by default** - The plugin only injects edit metadata when `NODE_ENV === 'development'`
+- **Dev-only by default** - Only active when `NODE_ENV === 'development'`
 - **Path validation** - Only `.mdx` and `.md` files can be edited
-- **File must exist** - Cannot create new files, only edit existing ones
-- **MDX validation** - Content is validated before saving to prevent syntax errors
+- **File must exist** - Cannot create new files through the editor
+- **MDX validation** - Content is validated before saving
+
+## Troubleshooting
+
+### "Cannot find module 'fumadocs-editor/plugin'"
+
+Make sure the package built successfully. If installing from GitHub, the `prepare` script should run automatically. Try reinstalling:
+
+```bash
+pnpm remove fumadocs-editor
+pnpm add github:sebastianhuus/fumadocs-editor
+```
+
+### "Module not found: Can't resolve '@mdxeditor/editor'"
+
+Install the MDXEditor package:
+
+```bash
+pnpm add @mdxeditor/editor
+```
+
+### Server/Client Component Errors
+
+Make sure:
+1. `EditorProviderWrapper` is in a separate file with `'use client'` at the top
+2. `EditorRegister` is in a separate file with `'use client'` at the top
+3. Your page component remains a server component (no `'use client'`)
 
 ## Development
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Build
 pnpm build
-
-# Watch mode
-pnpm dev
-
-# Type check
-pnpm types:check
+pnpm dev      # Watch mode
 ```
 
 ## License
