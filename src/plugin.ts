@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import type { LoaderPlugin } from 'fumadocs-core/source';
 import type { EditMetadata, EditorPluginConfig } from './types.js';
 
@@ -33,14 +34,17 @@ export function editorPlugin(config: EditorPluginConfig = {}): LoaderPlugin {
       for (const filePath of storage.getFiles()) {
         const file = storage.read(filePath);
 
-        // Only process page files that have an absolute path
+        // Only process page files that have a path
         if (!file || file.format !== 'page' || !file.absolutePath) {
           continue;
         }
 
+        // Ensure the path is absolute (resolve relative paths from cwd)
+        const absolutePath = resolve(file.absolutePath);
+
         // Inject edit metadata into the page data
         const editMetadata: EditMetadata = {
-          absolutePath: file.absolutePath,
+          absolutePath,
           endpoint,
           enabled: true,
         };
