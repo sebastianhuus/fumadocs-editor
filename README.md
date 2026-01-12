@@ -43,7 +43,7 @@ export const source = loader({
 
 ### 2. Create the API route
 
-Create `app/api/__fumadocs/edit/route.ts`:
+Create `app/api/fumadocs-edit/route.ts`:
 
 ```ts
 import { createNextHandler, createNextReadHandler } from 'fumadocs-editor/server';
@@ -207,7 +207,7 @@ export function EditorProviderWrapper({ children }: { children: React.ReactNode 
 ```ts
 editorPlugin({
   enabled: true,                        // Default: process.env.NODE_ENV === 'development'
-  endpoint: '/api/__fumadocs/edit',         // Default API endpoint
+  endpoint: '/api/fumadocs-edit',         // Default API endpoint
 })
 ```
 
