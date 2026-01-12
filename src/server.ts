@@ -238,7 +238,8 @@ async function getCompiler() {
   try {
     const mod = await import('@fumadocs/mdx-remote');
     compilerInstance = mod.createCompiler({
-      preset: 'minimal',
+      // Must use 'function-body' format for browser execution
+      outputFormat: 'function-body',
       development: true,
     });
     return compilerInstance;
