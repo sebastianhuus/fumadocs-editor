@@ -207,7 +207,7 @@ export function EditorProviderWrapper({ children }: { children: React.ReactNode 
 ```ts
 editorPlugin({
   enabled: true,                        // Default: process.env.NODE_ENV === 'development'
-  endpoint: '/__fumadocs/edit',         // Default API endpoint
+  endpoint: '/api/__fumadocs/edit',         // Default API endpoint
 })
 ```
 

@@ -19,7 +19,7 @@ import type { EditMetadata, EditorPluginConfig } from './types.js';
  */
 export function editorPlugin(config: EditorPluginConfig = {}): LoaderPlugin {
   const enabled = config.enabled ?? process.env.NODE_ENV === 'development';
-  const endpoint = config.endpoint ?? '/__fumadocs/edit';
+  const endpoint = config.endpoint ?? '/api/__fumadocs/edit';
 
   if (!enabled) {
     // Return no-op plugin when disabled
