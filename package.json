@@ -1,0 +1,83 @@
+{
+  "name": "fumadocs-editor",
+  "version": "0.0.1",
+  "description": "In-browser MDX editing for Fumadocs",
+  "keywords": [
+    "Docs",
+    "Fumadocs",
+    "MDX",
+    "Editor"
+  ],
+  "homepage": "https://github.com/yourusername/fumadocs-editor",
+  "license": "MIT",
+  "author": "Your Name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/fumadocs-editor.git"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js"
+    },
+    "./adapters/mdx-editor": {
+      "types": "./dist/adapters/mdx-editor.d.ts",
+      "import": "./dist/adapters/mdx-editor.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rimraf dist",
+    "dev": "tsdown --watch",
+    "lint": "eslint .",
+    "types:check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fumadocs-core": "^16.4.6",
+    "remark": "^15.0.0",
+    "remark-mdx": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "rimraf": "^6.0.0",
+    "tsdown": "^0.18.3",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@mdxeditor/editor": "^3.0.0",
+    "@types/react": "*",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@mdxeditor/editor": {
+      "optional": true
+    },
+    "@types/react": {
+      "optional": true
+    }
+  }
+}
