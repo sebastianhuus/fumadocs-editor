@@ -107,6 +107,20 @@ export interface EditMetadata {
 }
 
 /**
+ * Utility type to add EditMetadata to a page data type.
+ * Use this when accessing page.data._edit to get proper type safety.
+ *
+ * @example
+ * ```ts
+ * import type { WithEditor } from 'fumadocs-editor';
+ *
+ * const pageData = page.data as WithEditor<typeof page.data>;
+ * pageData._edit // EditMetadata | undefined
+ * ```
+ */
+export type WithEditor<T> = T & { _edit?: EditMetadata };
+
+/**
  * Configuration for the editor plugin
  */
 export interface EditorPluginConfig {
@@ -127,5 +141,35 @@ export interface EditorPluginConfig {
   enablePreview?: boolean;
   /** API endpoint for preview compilation (defaults to endpoint + '/preview') */
   previewEndpoint?: string;
+}
+
+/**
+ * Module augmentation for fumadocs-core to add _edit property to PageData
+ */
+declare module 'fumadocs-core/source' {
+  interface PageData {
+    /**
+     * Edit metadata added by fumadocs-editor plugin.
+     * Only available when the editorPlugin is configured in your loader.
+     *
+     * @see https://github.com/sebastianhuus/fumadocs-editor
+     */
+    _edit?: EditMetadata;
+  }
+}
+
+/**
+ * Module augmentation for fumadocs-mdx to add _edit property to DocData
+ */
+declare module 'fumadocs-mdx/config' {
+  interface DocData {
+    /**
+     * Edit metadata added by fumadocs-editor plugin.
+     * Only available when the editorPlugin is configured in your loader.
+     *
+     * @see https://github.com/sebastianhuus/fumadocs-editor
+     */
+    _edit?: EditMetadata;
+  }
 }
 
