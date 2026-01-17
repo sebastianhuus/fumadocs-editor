@@ -135,6 +135,7 @@ Then use it in your docs page (`app/docs/[[...slug]]/page.tsx`):
 ```tsx
 import { source } from '@/lib/source';
 import { EditorRegister } from './EditorRegister';
+import type { WithEditor } from 'fumadocs-editor';
 
 export default async function Page({ params }: { params: { slug?: string[] } }) {
   const page = source.getPage(params.slug);
@@ -142,7 +143,7 @@ export default async function Page({ params }: { params: { slug?: string[] } }) 
 
   return (
     <>
-      <EditorRegister editMetadata={page.data._edit} />
+      <EditorRegister editMetadata={(page.data as WithEditor<typeof page.data>)._edit} />
       <DocsPage>
         {/* Your page content */}
       </DocsPage>
@@ -155,6 +156,8 @@ export async function generateStaticParams() {
   return source.generateParams();
 }
 ```
+
+> **TypeScript Note:** The `WithEditor<T>` type utility adds the `_edit` property to your page data type. This is necessary because the `editorPlugin` adds this property at runtime, but TypeScript doesn't know about it from the schema definition.
 
 > **Note:** The `EditorRegister` component must be a separate client component because your page needs to remain a server component to export `generateStaticParams` and `generateMetadata`.
 
@@ -267,11 +270,20 @@ editorPlugin({
 
 | Export | Description |
 |--------|-------------|
-| `fumadocs-editor` | Type definitions |
+| `fumadocs-editor` | Type definitions (`EditMetadata`, `WithEditor`, etc.) |
 | `fumadocs-editor/plugin` | Loader plugin |
 | `fumadocs-editor/server` | API route handlers |
 | `fumadocs-editor/components` | React components and hooks |
 | `fumadocs-editor/adapters/mdx-editor` | MDXEditor adapter (recommended) |
+
+### Types
+
+| Type | Description |
+|------|-------------|
+| `EditMetadata` | Metadata object added to pages by the plugin |
+| `WithEditor<T>` | Utility type that adds `_edit?: EditMetadata` to a page data type |
+| `EditorAdapter` | Interface for creating custom editor adapters |
+| `EditorPluginConfig` | Configuration options for the loader plugin |
 
 ### Components & Hooks
 
