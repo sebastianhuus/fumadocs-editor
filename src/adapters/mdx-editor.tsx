@@ -690,6 +690,42 @@ function MDXEditorComponent({
         .fd-mdx-editor-content:focus {
           outline: none;
         }
+        .fd-mdx-editor-content h1 {
+          font-size: 2em;
+          font-weight: 700;
+          margin-top: 0;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h2 {
+          font-size: 1.5em;
+          font-weight: 600;
+          margin-top: 1.5em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h3 {
+          font-size: 1.25em;
+          font-weight: 600;
+          margin-top: 1.25em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h4 {
+          font-size: 1.1em;
+          font-weight: 600;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h5 {
+          font-size: 1em;
+          font-weight: 600;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h6 {
+          font-size: 0.875em;
+          font-weight: 600;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
+        }
         .fd-mdx-editor-content ul {
           list-style-type: disc;
           margin: 1em 0;
