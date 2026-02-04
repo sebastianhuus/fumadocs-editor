@@ -429,7 +429,7 @@ function MDXEditorComponent({
               mdx: 'MDX',
             },
           }),
-          diffSourcePlugin({ viewMode: 'rich-text' }),
+          diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: initialContent }),
           jsxPlugin({ jsxComponentDescriptors: jsxDescriptors }),
           toolbarPlugin({
             toolbarContents: () => (
@@ -566,6 +566,7 @@ function MDXEditorComponent({
               plugins={plugins}
               onChange={handleChange}
               contentEditableClassName="fd-mdx-editor-content"
+              toMarkdownOptions={{ incrementListMarker: false }}
             />
           </div>
         )}
