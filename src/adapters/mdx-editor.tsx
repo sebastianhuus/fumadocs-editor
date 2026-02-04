@@ -690,6 +690,28 @@ function MDXEditorComponent({
         .fd-mdx-editor-content:focus {
           outline: none;
         }
+        .fd-mdx-editor-content ul {
+          list-style-type: disc;
+          margin: 1em 0;
+          padding-left: 1.5em;
+        }
+        .fd-mdx-editor-content ol {
+          list-style-type: decimal;
+          margin: 1em 0;
+          padding-left: 1.5em;
+        }
+        .fd-mdx-editor-content li {
+          margin: 0.25em 0;
+        }
+        .fd-mdx-editor-content li > ul {
+          list-style-type: circle;
+        }
+        .fd-mdx-editor-content li > ul > li > ul {
+          list-style-type: square;
+        }
+        .fd-mdx-editor-content li > ol {
+          list-style-type: lower-alpha;
+        }
         .fd-mdx-preview-content {
           font-family: var(--fd-font-family, system-ui, sans-serif);
           line-height: 1.7;
@@ -731,12 +753,24 @@ function MDXEditorComponent({
           background: none;
           padding: 0;
         }
-        .fd-mdx-preview-content ul, .fd-mdx-preview-content ol {
+        .fd-mdx-preview-content ul {
+          list-style-type: disc;
+          margin: 1em 0;
+          padding-left: 1.5em;
+        }
+        .fd-mdx-preview-content ol {
+          list-style-type: decimal;
           margin: 1em 0;
           padding-left: 1.5em;
         }
         .fd-mdx-preview-content li {
           margin: 0.25em 0;
+        }
+        .fd-mdx-preview-content li > ul {
+          list-style-type: circle;
+        }
+        .fd-mdx-preview-content li > ol {
+          list-style-type: lower-alpha;
         }
         .fd-mdx-preview-content blockquote {
           border-left: 4px solid var(--fd-border, #e5e7eb);
