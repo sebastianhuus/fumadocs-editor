@@ -167,46 +167,6 @@ export function EditModal({
       aria-modal="true"
       aria-label="Edit page"
     >
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          borderBottom: '1px solid var(--color-fd-border, #e5e7eb)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontWeight: 500 }}>Editing</span>
-          <code
-            style={{
-              fontSize: '12px',
-              padding: '2px 6px',
-              backgroundColor: 'var(--color-fd-muted, #f3f4f6)',
-              borderRadius: '4px',
-            }}
-          >
-            {editMetadata.absolutePath.split('/').pop()}
-          </code>
-        </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            padding: '4px 8px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontSize: '14px',
-          }}
-          aria-label="Close editor"
-        >
-          Close
-        </button>
-      </div>
-
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {state.status === 'loading' && (

@@ -330,6 +330,7 @@ function MDXEditorComponent({
   initialContent,
   onSave,
   onCancel,
+  filePath,
   jsxComponentDescriptors,
   mdxComponents,
   initialViewMode = 'split',
@@ -537,6 +538,111 @@ function MDXEditorComponent({
         minHeight: 0,
       }}
     >
+      {/* Controls bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 16px',
+          borderBottom: '1px solid var(--color-fd-border, #e5e7eb)',
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          {/* Filename */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontWeight: 500, fontSize: '14px' }}>Editing</span>
+            <code
+              style={{
+                fontSize: '12px',
+                padding: '2px 6px',
+                backgroundColor: 'var(--color-fd-muted, #f3f4f6)',
+                borderRadius: '4px',
+              }}
+            >
+              {filePath.split('/').pop()}
+            </code>
+          </div>
+
+          {/* View mode toggle */}
+          {enablePreview && (
+            <ViewModeToggle
+              viewMode={viewMode}
+              onChange={setViewMode}
+              previewAvailable={previewAvailable}
+            />
+          )}
+
+          {/* Status */}
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'var(--color-fd-muted-foreground, #6b7280)',
+            }}
+          >
+            {hasChanges ? (
+              <span style={{ color: 'var(--color-fd-warning, #f59e0b)' }}>
+                Unsaved changes
+              </span>
+            ) : (
+              <span>No changes</span>
+            )}
+            <span style={{ marginLeft: '8px', opacity: 0.7 }}>
+              Cmd/Ctrl+S to save
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            style={{
+              padding: '4px 12px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor:
+                hasChanges && !isSaving
+                  ? 'var(--color-fd-primary, #3b82f6)'
+                  : 'var(--color-fd-muted, #9ca3af)',
+              color: 'var(--color-fd-primary-foreground, white)',
+              cursor: hasChanges && !isSaving ? 'pointer' : 'not-allowed',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            {isSaving && <LoadingSpinner size={14} />}
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSaving}
+            style={{
+              padding: '4px 12px',
+              border: '1px solid var(--color-fd-border, #e5e7eb)',
+              borderRadius: '6px',
+              backgroundColor: 'transparent',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.5 : 1,
+              fontSize: '13px',
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
       {/* Main content area */}
       <div
         style={{
@@ -588,97 +694,6 @@ function MDXEditorComponent({
             />
           </div>
         )}
-      </div>
-
-      {/* Footer with view toggle and save/cancel buttons */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          borderTop: '1px solid var(--color-fd-border, #e5e7eb)',
-          backgroundColor: 'var(--color-fd-background, #fff)',
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-          }}
-        >
-          {/* View mode toggle */}
-          {enablePreview && (
-            <ViewModeToggle
-              viewMode={viewMode}
-              onChange={setViewMode}
-              previewAvailable={previewAvailable}
-            />
-          )}
-
-          {/* Status */}
-          <div
-            style={{
-              fontSize: '12px',
-              color: 'var(--color-fd-muted-foreground, #6b7280)',
-            }}
-          >
-            {hasChanges ? (
-              <span style={{ color: 'var(--color-fd-warning, #f59e0b)' }}>
-                Unsaved changes
-              </span>
-            ) : (
-              <span>No changes</span>
-            )}
-            <span style={{ marginLeft: '8px', opacity: 0.7 }}>
-              Press Cmd/Ctrl+S to save
-            </span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isSaving}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid var(--color-fd-border, #e5e7eb)',
-              borderRadius: '6px',
-              backgroundColor: 'transparent',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              opacity: isSaving ? 0.5 : 1,
-              fontSize: '14px',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              backgroundColor:
-                hasChanges && !isSaving
-                  ? 'var(--color-fd-primary, #3b82f6)'
-                  : 'var(--color-fd-muted, #9ca3af)',
-              color: 'var(--color-fd-primary-foreground, white)',
-              cursor: hasChanges && !isSaving ? 'pointer' : 'not-allowed',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            {isSaving && <LoadingSpinner size={14} />}
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
       </div>
 
       {/* Styles for MDXEditor content area */}
