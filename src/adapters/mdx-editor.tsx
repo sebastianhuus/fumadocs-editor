@@ -189,7 +189,7 @@ function PreviewPanel({
         height: '100%',
         overflow: 'auto',
         padding: '16px 24px',
-        backgroundColor: 'var(--fd-background, #fff)',
+        backgroundColor: 'var(--color-fd-background, #fff)',
       }}
     >
       {preview.status === 'loading' && (
@@ -199,7 +199,7 @@ function PreviewPanel({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '24px',
-            color: 'var(--fd-muted-foreground, #6b7280)',
+            color: 'var(--color-fd-muted-foreground, #6b7280)',
           }}
         >
           <LoadingSpinner size={16} />
@@ -211,10 +211,10 @@ function PreviewPanel({
         <div
           style={{
             padding: '12px',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
+            backgroundColor: 'color-mix(in srgb, var(--color-fd-error, #dc2626) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-fd-error, #dc2626) 30%, transparent)',
             borderRadius: '6px',
-            color: '#dc2626',
+            color: 'var(--color-fd-error, #dc2626)',
             fontSize: '14px',
             whiteSpace: 'pre-wrap',
             fontFamily: 'monospace',
@@ -244,7 +244,7 @@ function PreviewPanel({
             <p
               style={{
                 fontSize: '1.125rem',
-                color: 'var(--fd-muted-foreground, #6b7280)',
+                color: 'var(--color-fd-muted-foreground, #6b7280)',
                 marginTop: 0,
                 marginBottom: '2rem',
               }}
@@ -275,8 +275,8 @@ function ViewModeToggle({
     padding: '4px 8px',
     border: 'none',
     borderRadius: '4px',
-    backgroundColor: active ? 'var(--fd-primary, #3b82f6)' : 'transparent',
-    color: active ? 'white' : 'var(--fd-foreground, #1f2937)',
+    backgroundColor: active ? 'var(--color-fd-primary, #3b82f6)' : 'transparent',
+    color: active ? 'var(--color-fd-primary-foreground, white)' : 'var(--color-fd-foreground, #1f2937)',
     cursor: 'pointer',
     fontSize: '12px',
     fontWeight: 500,
@@ -290,7 +290,7 @@ function ViewModeToggle({
         alignItems: 'center',
         gap: '2px',
         padding: '2px',
-        backgroundColor: 'var(--fd-muted, #f3f4f6)',
+        backgroundColor: 'var(--color-fd-muted, #f3f4f6)',
         borderRadius: '6px',
       }}
     >
@@ -516,7 +516,7 @@ function MDXEditorComponent({
           alignItems: 'center',
           justifyContent: 'center',
           padding: '48px 24px',
-          color: 'var(--fd-muted-foreground, #6b7280)',
+          color: 'var(--color-fd-muted-foreground, #6b7280)',
         }}
       >
         <LoadingSpinner />
@@ -556,7 +556,7 @@ function MDXEditorComponent({
               minWidth: 0,
               borderRight:
                 viewMode === 'split'
-                  ? '1px solid var(--fd-border, #e5e7eb)'
+                  ? '1px solid var(--color-fd-border, #e5e7eb)'
                   : undefined,
             }}
           >
@@ -597,8 +597,8 @@ function MDXEditorComponent({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 16px',
-          borderTop: '1px solid var(--fd-border, #e5e7eb)',
-          backgroundColor: 'var(--fd-background, #fff)',
+          borderTop: '1px solid var(--color-fd-border, #e5e7eb)',
+          backgroundColor: 'var(--color-fd-background, #fff)',
           flexShrink: 0,
         }}
       >
@@ -622,11 +622,11 @@ function MDXEditorComponent({
           <div
             style={{
               fontSize: '12px',
-              color: 'var(--fd-muted-foreground, #6b7280)',
+              color: 'var(--color-fd-muted-foreground, #6b7280)',
             }}
           >
             {hasChanges ? (
-              <span style={{ color: 'var(--fd-warning, #f59e0b)' }}>
+              <span style={{ color: 'var(--color-fd-warning, #f59e0b)' }}>
                 Unsaved changes
               </span>
             ) : (
@@ -645,7 +645,7 @@ function MDXEditorComponent({
             disabled={isSaving}
             style={{
               padding: '8px 16px',
-              border: '1px solid var(--fd-border, #e5e7eb)',
+              border: '1px solid var(--color-fd-border, #e5e7eb)',
               borderRadius: '6px',
               backgroundColor: 'transparent',
               cursor: isSaving ? 'not-allowed' : 'pointer',
@@ -665,9 +665,9 @@ function MDXEditorComponent({
               borderRadius: '6px',
               backgroundColor:
                 hasChanges && !isSaving
-                  ? 'var(--fd-primary, #3b82f6)'
-                  : 'var(--fd-muted, #9ca3af)',
-              color: 'white',
+                  ? 'var(--color-fd-primary, #3b82f6)'
+                  : 'var(--color-fd-muted, #9ca3af)',
+              color: 'var(--color-fd-primary-foreground, white)',
               cursor: hasChanges && !isSaving ? 'pointer' : 'not-allowed',
               fontSize: '14px',
               display: 'flex',
@@ -750,7 +750,7 @@ function MDXEditorComponent({
           list-style-type: lower-alpha;
         }
         .fd-mdx-preview-content {
-          font-family: var(--fd-font-family, system-ui, sans-serif);
+          font-family: var(--color-fd-font-family, system-ui, sans-serif);
           line-height: 1.7;
         }
         .fd-mdx-preview-content h1 {
@@ -775,13 +775,13 @@ function MDXEditorComponent({
           margin: 1em 0;
         }
         .fd-mdx-preview-content code {
-          background: var(--fd-muted, #f3f4f6);
+          background: var(--color-fd-muted, #f3f4f6);
           padding: 0.2em 0.4em;
           border-radius: 4px;
           font-size: 0.9em;
         }
         .fd-mdx-preview-content pre {
-          background: var(--fd-muted, #f3f4f6);
+          background: var(--color-fd-muted, #f3f4f6);
           padding: 1em;
           border-radius: 6px;
           overflow-x: auto;
@@ -810,13 +810,13 @@ function MDXEditorComponent({
           list-style-type: lower-alpha;
         }
         .fd-mdx-preview-content blockquote {
-          border-left: 4px solid var(--fd-border, #e5e7eb);
+          border-left: 4px solid var(--color-fd-border, #e5e7eb);
           padding-left: 1em;
           margin: 1em 0;
-          color: var(--fd-muted-foreground, #6b7280);
+          color: var(--color-fd-muted-foreground, #6b7280);
         }
         .fd-mdx-preview-content a {
-          color: var(--fd-primary, #3b82f6);
+          color: var(--color-fd-primary, #3b82f6);
           text-decoration: underline;
         }
         .fd-mdx-preview-content table {
@@ -825,12 +825,12 @@ function MDXEditorComponent({
           margin: 1em 0;
         }
         .fd-mdx-preview-content th, .fd-mdx-preview-content td {
-          border: 1px solid var(--fd-border, #e5e7eb);
+          border: 1px solid var(--color-fd-border, #e5e7eb);
           padding: 0.5em 1em;
           text-align: left;
         }
         .fd-mdx-preview-content th {
-          background: var(--fd-muted, #f3f4f6);
+          background: var(--color-fd-muted, #f3f4f6);
           font-weight: 600;
         }
       `}</style>

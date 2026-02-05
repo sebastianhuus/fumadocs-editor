@@ -160,7 +160,8 @@ export function EditModal({
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: 'var(--fd-background, #fff)',
+        backgroundColor: 'var(--color-fd-background, #fff)',
+        color: 'var(--color-fd-foreground, #1f2937)',
       }}
       role="dialog"
       aria-modal="true"
@@ -173,7 +174,7 @@ export function EditModal({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 16px',
-          borderBottom: '1px solid var(--fd-border, #e5e7eb)',
+          borderBottom: '1px solid var(--color-fd-border, #e5e7eb)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -182,7 +183,7 @@ export function EditModal({
             style={{
               fontSize: '12px',
               padding: '2px 6px',
-              backgroundColor: 'var(--fd-muted, #f3f4f6)',
+              backgroundColor: 'var(--color-fd-muted, #f3f4f6)',
               borderRadius: '4px',
             }}
           >
@@ -217,10 +218,10 @@ export function EditModal({
             <div
               style={{
                 padding: '12px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
+                backgroundColor: 'color-mix(in srgb, var(--color-fd-error, #dc2626) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-fd-error, #dc2626) 30%, transparent)',
                 borderRadius: '6px',
-                color: '#dc2626',
+                color: 'var(--color-fd-error, #dc2626)',
               }}
             >
               <strong>Error:</strong> {state.error}
@@ -237,8 +238,8 @@ export function EditModal({
               style={{
                 marginTop: '12px',
                 padding: '8px 16px',
-                backgroundColor: 'var(--fd-primary, #3b82f6)',
-                color: 'white',
+                backgroundColor: 'var(--color-fd-primary, #3b82f6)',
+                color: 'var(--color-fd-primary-foreground, white)',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -273,8 +274,8 @@ export function EditModal({
             left: '50%',
             transform: 'translate(-50%, -50%)',
             padding: '16px 24px',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
+            backgroundColor: 'var(--color-fd-overlay, rgba(0, 0, 0, 0.8))',
+            color: 'var(--color-fd-primary-foreground, white)',
             borderRadius: '8px',
           }}
         >
