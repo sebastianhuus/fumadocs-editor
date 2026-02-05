@@ -189,7 +189,7 @@ function PreviewPanel({
         height: '100%',
         overflow: 'auto',
         padding: '16px 24px',
-        backgroundColor: 'var(--fd-background, #fff)',
+        backgroundColor: 'var(--color-fd-background, #fff)',
       }}
     >
       {preview.status === 'loading' && (
@@ -199,7 +199,7 @@ function PreviewPanel({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '24px',
-            color: 'var(--fd-muted-foreground, #6b7280)',
+            color: 'var(--color-fd-muted-foreground, #6b7280)',
           }}
         >
           <LoadingSpinner size={16} />
@@ -211,10 +211,10 @@ function PreviewPanel({
         <div
           style={{
             padding: '12px',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
+            backgroundColor: 'color-mix(in srgb, var(--color-fd-error, #dc2626) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-fd-error, #dc2626) 30%, transparent)',
             borderRadius: '6px',
-            color: '#dc2626',
+            color: 'var(--color-fd-error, #dc2626)',
             fontSize: '14px',
             whiteSpace: 'pre-wrap',
             fontFamily: 'monospace',
@@ -244,7 +244,7 @@ function PreviewPanel({
             <p
               style={{
                 fontSize: '1.125rem',
-                color: 'var(--fd-muted-foreground, #6b7280)',
+                color: 'var(--color-fd-muted-foreground, #6b7280)',
                 marginTop: 0,
                 marginBottom: '2rem',
               }}
@@ -275,8 +275,8 @@ function ViewModeToggle({
     padding: '4px 8px',
     border: 'none',
     borderRadius: '4px',
-    backgroundColor: active ? 'var(--fd-primary, #3b82f6)' : 'transparent',
-    color: active ? 'white' : 'var(--fd-foreground, #1f2937)',
+    backgroundColor: active ? 'var(--color-fd-primary, #3b82f6)' : 'transparent',
+    color: active ? 'var(--color-fd-primary-foreground, white)' : 'var(--color-fd-foreground, #1f2937)',
     cursor: 'pointer',
     fontSize: '12px',
     fontWeight: 500,
@@ -290,7 +290,7 @@ function ViewModeToggle({
         alignItems: 'center',
         gap: '2px',
         padding: '2px',
-        backgroundColor: 'var(--fd-muted, #f3f4f6)',
+        backgroundColor: 'var(--color-fd-muted, #f3f4f6)',
         borderRadius: '6px',
       }}
     >
@@ -330,6 +330,7 @@ function MDXEditorComponent({
   initialContent,
   onSave,
   onCancel,
+  filePath,
   jsxComponentDescriptors,
   mdxComponents,
   initialViewMode = 'split',
@@ -429,7 +430,7 @@ function MDXEditorComponent({
               mdx: 'MDX',
             },
           }),
-          diffSourcePlugin({ viewMode: 'rich-text' }),
+          diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: initialContent }),
           jsxPlugin({ jsxComponentDescriptors: jsxDescriptors }),
           toolbarPlugin({
             toolbarContents: () => (
@@ -516,7 +517,7 @@ function MDXEditorComponent({
           alignItems: 'center',
           justifyContent: 'center',
           padding: '48px 24px',
-          color: 'var(--fd-muted-foreground, #6b7280)',
+          color: 'var(--color-fd-muted-foreground, #6b7280)',
         }}
       >
         <LoadingSpinner />
@@ -537,6 +538,111 @@ function MDXEditorComponent({
         minHeight: 0,
       }}
     >
+      {/* Controls bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 16px',
+          borderBottom: '1px solid var(--color-fd-border, #e5e7eb)',
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          {/* Filename */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontWeight: 500, fontSize: '14px' }}>Editing</span>
+            <code
+              style={{
+                fontSize: '12px',
+                padding: '2px 6px',
+                backgroundColor: 'var(--color-fd-muted, #f3f4f6)',
+                borderRadius: '4px',
+              }}
+            >
+              {filePath.split('/').pop()}
+            </code>
+          </div>
+
+          {/* View mode toggle */}
+          {enablePreview && (
+            <ViewModeToggle
+              viewMode={viewMode}
+              onChange={setViewMode}
+              previewAvailable={previewAvailable}
+            />
+          )}
+
+          {/* Status */}
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'var(--color-fd-muted-foreground, #6b7280)',
+            }}
+          >
+            {hasChanges ? (
+              <span style={{ color: 'var(--color-fd-warning, #f59e0b)' }}>
+                Unsaved changes
+              </span>
+            ) : (
+              <span>No changes</span>
+            )}
+            <span style={{ marginLeft: '8px', opacity: 0.7 }}>
+              Cmd/Ctrl+S to save
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            style={{
+              padding: '4px 12px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor:
+                hasChanges && !isSaving
+                  ? 'var(--color-fd-primary, #3b82f6)'
+                  : 'var(--color-fd-muted, #9ca3af)',
+              color: 'var(--color-fd-primary-foreground, white)',
+              cursor: hasChanges && !isSaving ? 'pointer' : 'not-allowed',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            {isSaving && <LoadingSpinner size={14} />}
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSaving}
+            style={{
+              padding: '4px 12px',
+              border: '1px solid var(--color-fd-border, #e5e7eb)',
+              borderRadius: '6px',
+              backgroundColor: 'transparent',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.5 : 1,
+              fontSize: '13px',
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
       {/* Main content area */}
       <div
         style={{
@@ -556,7 +662,7 @@ function MDXEditorComponent({
               minWidth: 0,
               borderRight:
                 viewMode === 'split'
-                  ? '1px solid var(--fd-border, #e5e7eb)'
+                  ? '1px solid var(--color-fd-border, #e5e7eb)'
                   : undefined,
             }}
           >
@@ -566,6 +672,7 @@ function MDXEditorComponent({
               plugins={plugins}
               onChange={handleChange}
               contentEditableClassName="fd-mdx-editor-content"
+              toMarkdownOptions={{ incrementListMarker: false }}
             />
           </div>
         )}
@@ -589,97 +696,6 @@ function MDXEditorComponent({
         )}
       </div>
 
-      {/* Footer with view toggle and save/cancel buttons */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          borderTop: '1px solid var(--fd-border, #e5e7eb)',
-          backgroundColor: 'var(--fd-background, #fff)',
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-          }}
-        >
-          {/* View mode toggle */}
-          {enablePreview && (
-            <ViewModeToggle
-              viewMode={viewMode}
-              onChange={setViewMode}
-              previewAvailable={previewAvailable}
-            />
-          )}
-
-          {/* Status */}
-          <div
-            style={{
-              fontSize: '12px',
-              color: 'var(--fd-muted-foreground, #6b7280)',
-            }}
-          >
-            {hasChanges ? (
-              <span style={{ color: 'var(--fd-warning, #f59e0b)' }}>
-                Unsaved changes
-              </span>
-            ) : (
-              <span>No changes</span>
-            )}
-            <span style={{ marginLeft: '8px', opacity: 0.7 }}>
-              Press Cmd/Ctrl+S to save
-            </span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isSaving}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid var(--fd-border, #e5e7eb)',
-              borderRadius: '6px',
-              backgroundColor: 'transparent',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              opacity: isSaving ? 0.5 : 1,
-              fontSize: '14px',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              backgroundColor:
-                hasChanges && !isSaving
-                  ? 'var(--fd-primary, #3b82f6)'
-                  : 'var(--fd-muted, #9ca3af)',
-              color: 'white',
-              cursor: hasChanges && !isSaving ? 'pointer' : 'not-allowed',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            {isSaving && <LoadingSpinner size={14} />}
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
-
       {/* Styles for MDXEditor content area */}
       <style>{`
         .fd-mdx-editor-content {
@@ -690,8 +706,66 @@ function MDXEditorComponent({
         .fd-mdx-editor-content:focus {
           outline: none;
         }
+        .fd-mdx-editor-content h1 {
+          font-size: 2em;
+          font-weight: 700;
+          margin-top: 0;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h2 {
+          font-size: 1.5em;
+          font-weight: 600;
+          margin-top: 1.5em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h3 {
+          font-size: 1.25em;
+          font-weight: 600;
+          margin-top: 1.25em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h4 {
+          font-size: 1.1em;
+          font-weight: 600;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h5 {
+          font-size: 1em;
+          font-weight: 600;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content h6 {
+          font-size: 0.875em;
+          font-weight: 600;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
+        }
+        .fd-mdx-editor-content ul {
+          list-style-type: disc;
+          margin: 1em 0;
+          padding-left: 1.5em;
+        }
+        .fd-mdx-editor-content ol {
+          list-style-type: decimal;
+          margin: 1em 0;
+          padding-left: 1.5em;
+        }
+        .fd-mdx-editor-content li {
+          margin: 0.25em 0;
+        }
+        .fd-mdx-editor-content li > ul {
+          list-style-type: circle;
+        }
+        .fd-mdx-editor-content li > ul > li > ul {
+          list-style-type: square;
+        }
+        .fd-mdx-editor-content li > ol {
+          list-style-type: lower-alpha;
+        }
         .fd-mdx-preview-content {
-          font-family: var(--fd-font-family, system-ui, sans-serif);
+          font-family: var(--color-fd-font-family, system-ui, sans-serif);
           line-height: 1.7;
         }
         .fd-mdx-preview-content h1 {
@@ -716,13 +790,13 @@ function MDXEditorComponent({
           margin: 1em 0;
         }
         .fd-mdx-preview-content code {
-          background: var(--fd-muted, #f3f4f6);
+          background: var(--color-fd-muted, #f3f4f6);
           padding: 0.2em 0.4em;
           border-radius: 4px;
           font-size: 0.9em;
         }
         .fd-mdx-preview-content pre {
-          background: var(--fd-muted, #f3f4f6);
+          background: var(--color-fd-muted, #f3f4f6);
           padding: 1em;
           border-radius: 6px;
           overflow-x: auto;
@@ -731,21 +805,33 @@ function MDXEditorComponent({
           background: none;
           padding: 0;
         }
-        .fd-mdx-preview-content ul, .fd-mdx-preview-content ol {
+        .fd-mdx-preview-content ul {
+          list-style-type: disc;
+          margin: 1em 0;
+          padding-left: 1.5em;
+        }
+        .fd-mdx-preview-content ol {
+          list-style-type: decimal;
           margin: 1em 0;
           padding-left: 1.5em;
         }
         .fd-mdx-preview-content li {
           margin: 0.25em 0;
         }
+        .fd-mdx-preview-content li > ul {
+          list-style-type: circle;
+        }
+        .fd-mdx-preview-content li > ol {
+          list-style-type: lower-alpha;
+        }
         .fd-mdx-preview-content blockquote {
-          border-left: 4px solid var(--fd-border, #e5e7eb);
+          border-left: 4px solid var(--color-fd-border, #e5e7eb);
           padding-left: 1em;
           margin: 1em 0;
-          color: var(--fd-muted-foreground, #6b7280);
+          color: var(--color-fd-muted-foreground, #6b7280);
         }
         .fd-mdx-preview-content a {
-          color: var(--fd-primary, #3b82f6);
+          color: var(--color-fd-primary, #3b82f6);
           text-decoration: underline;
         }
         .fd-mdx-preview-content table {
@@ -754,12 +840,12 @@ function MDXEditorComponent({
           margin: 1em 0;
         }
         .fd-mdx-preview-content th, .fd-mdx-preview-content td {
-          border: 1px solid var(--fd-border, #e5e7eb);
+          border: 1px solid var(--color-fd-border, #e5e7eb);
           padding: 0.5em 1em;
           text-align: left;
         }
         .fd-mdx-preview-content th {
-          background: var(--fd-muted, #f3f4f6);
+          background: var(--color-fd-muted, #f3f4f6);
           font-weight: 600;
         }
       `}</style>

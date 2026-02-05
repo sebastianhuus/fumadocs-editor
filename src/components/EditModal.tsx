@@ -160,52 +160,13 @@ export function EditModal({
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: 'var(--fd-background, #fff)',
+        backgroundColor: 'var(--color-fd-background, #fff)',
+        color: 'var(--color-fd-foreground, #1f2937)',
       }}
       role="dialog"
       aria-modal="true"
       aria-label="Edit page"
     >
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          borderBottom: '1px solid var(--fd-border, #e5e7eb)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontWeight: 500 }}>Editing</span>
-          <code
-            style={{
-              fontSize: '12px',
-              padding: '2px 6px',
-              backgroundColor: 'var(--fd-muted, #f3f4f6)',
-              borderRadius: '4px',
-            }}
-          >
-            {editMetadata.absolutePath.split('/').pop()}
-          </code>
-        </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          style={{
-            padding: '4px 8px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontSize: '14px',
-          }}
-          aria-label="Close editor"
-        >
-          Close
-        </button>
-      </div>
-
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {state.status === 'loading' && (
@@ -217,10 +178,10 @@ export function EditModal({
             <div
               style={{
                 padding: '12px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
+                backgroundColor: 'color-mix(in srgb, var(--color-fd-error, #dc2626) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-fd-error, #dc2626) 30%, transparent)',
                 borderRadius: '6px',
-                color: '#dc2626',
+                color: 'var(--color-fd-error, #dc2626)',
               }}
             >
               <strong>Error:</strong> {state.error}
@@ -237,8 +198,8 @@ export function EditModal({
               style={{
                 marginTop: '12px',
                 padding: '8px 16px',
-                backgroundColor: 'var(--fd-primary, #3b82f6)',
-                color: 'white',
+                backgroundColor: 'var(--color-fd-primary, #3b82f6)',
+                color: 'var(--color-fd-primary-foreground, white)',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -273,8 +234,8 @@ export function EditModal({
             left: '50%',
             transform: 'translate(-50%, -50%)',
             padding: '16px 24px',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
+            backgroundColor: 'var(--color-fd-overlay, rgba(0, 0, 0, 0.8))',
+            color: 'var(--color-fd-primary-foreground, white)',
             borderRadius: '8px',
           }}
         >
