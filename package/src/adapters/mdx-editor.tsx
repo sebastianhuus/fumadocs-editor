@@ -334,6 +334,7 @@ function MDXEditorComponent({
   jsxComponentDescriptors,
   mdxComponents,
   initialViewMode = 'split',
+  diffSourceViewMode = 'rich-text',
   enablePreview = true,
   previewEndpoint = '/api/fumadocs-edit/preview',
 }: EditorComponentProps): ReactNode {
@@ -430,7 +431,7 @@ function MDXEditorComponent({
               mdx: 'MDX',
             },
           }),
-          diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: initialContent }),
+          diffSourcePlugin({ viewMode: diffSourceViewMode }),
           jsxPlugin({ jsxComponentDescriptors: jsxDescriptors }),
           toolbarPlugin({
             toolbarContents: () => (

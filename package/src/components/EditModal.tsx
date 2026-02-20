@@ -26,6 +26,9 @@ export interface EditModalProps {
   /** Initial view mode */
   initialViewMode?: EditorViewMode;
 
+  /** Initial diff source view mode (rich-text or source) */
+  diffSourceViewMode?: 'rich-text' | 'source';
+
   /** Whether to enable preview */
   enablePreview?: boolean;
 
@@ -53,6 +56,7 @@ export function EditModal({
   jsxComponentDescriptors,
   mdxComponents,
   initialViewMode,
+  diffSourceViewMode,
   enablePreview,
   previewEndpoint,
   onClose,
@@ -217,6 +221,7 @@ export function EditModal({
             jsxComponentDescriptors={jsxComponentDescriptors}
             mdxComponents={mdxComponents}
             initialViewMode={initialViewMode}
+            diffSourceViewMode={diffSourceViewMode}
             enablePreview={enablePreview}
             previewEndpoint={previewEndpoint}
             onSave={handleSave}
