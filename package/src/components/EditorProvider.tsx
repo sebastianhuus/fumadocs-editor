@@ -46,6 +46,13 @@ export interface EditorProviderProps {
   initialViewMode?: EditorViewMode;
 
   /**
+   * Initial view mode for the internal MDXEditor diff source plugin.
+   * Controls whether the editor starts in WYSIWYG or source mode.
+   * @default 'rich-text'
+   */
+  diffSourceViewMode?: 'rich-text' | 'source';
+
+  /**
    * Whether to enable the live preview panel.
    * Requires @fumadocs/mdx-remote to be installed.
    * @default true
@@ -107,6 +114,7 @@ export function EditorProvider({
   jsxComponentDescriptors,
   mdxComponents,
   initialViewMode = 'split',
+  diffSourceViewMode = 'rich-text',
   enablePreview = true,
   previewEndpoint = '/api/fumadocs-edit/preview',
   buttonPosition = 'bottom-right',
@@ -180,6 +188,7 @@ export function EditorProvider({
           jsxComponentDescriptors={jsxComponentDescriptors}
           mdxComponents={mdxComponents}
           initialViewMode={initialViewMode}
+          diffSourceViewMode={diffSourceViewMode}
           enablePreview={enablePreview}
           previewEndpoint={previewEndpoint}
           onClose={() => setIsEditorOpen(false)}
