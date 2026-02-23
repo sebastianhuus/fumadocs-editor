@@ -156,33 +156,3 @@ export interface EditorPluginConfig {
   previewEndpoint?: string;
 }
 
-/**
- * Module augmentation for fumadocs-core to add _edit property to PageData
- */
-declare module 'fumadocs-core/source' {
-  interface PageData {
-    /**
-     * Edit metadata added by fumadocs-editor plugin.
-     * Only available when the editorPlugin is configured in your loader.
-     *
-     * @see https://github.com/sebastianhuus/fumadocs-editor
-     */
-    _edit?: EditMetadata;
-  }
-}
-
-/**
- * Module augmentation for fumadocs-mdx to add _edit property to DocData
- */
-declare module 'fumadocs-mdx/config' {
-  interface DocData {
-    /**
-     * Edit metadata added by fumadocs-editor plugin.
-     * Only available when the editorPlugin is configured in your loader.
-     *
-     * @see https://github.com/sebastianhuus/fumadocs-editor
-     */
-    _edit?: EditMetadata;
-  }
-}
-
