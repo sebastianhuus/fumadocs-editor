@@ -18,15 +18,13 @@ Edit your documentation directly in the browser during development. Changes are 
 ## Installation
 
 ```bash
-# Install the editor package
-pnpm add fumadocs-editor
-
-# Install the recommended editor (MDXEditor)
-pnpm add @mdxeditor/editor
+pnpm add fumadocs-editor @mdxeditor/editor
 
 # Optional: Install for live MDX preview
 pnpm add @fumadocs/mdx-remote
 ```
+
+> **Prerequisite:** This package requires `fumadocs-core` as a peer dependency. If you're using Fumadocs, you already have it.
 
 > **Note:** We recommend [MDXEditor](https://mdxeditor.dev/) as the default editor. It provides WYSIWYG editing with source mode toggle, and has excellent MDX support including custom JSX components.
 
@@ -300,6 +298,7 @@ editorPlugin({
 |----------|-------------|
 | `createNextHandler()` | POST handler for saving files |
 | `createNextReadHandler()` | GET handler for reading files |
+| `createNextPreviewHandler()` | POST handler for compiling MDX preview |
 
 ## Using a Different Editor
 
@@ -332,7 +331,7 @@ Make sure the package built successfully. If installing from GitHub, the `prepar
 
 ```bash
 pnpm remove fumadocs-editor
-pnpm add github:sebastianhuus/fumadocs-editor
+pnpm add fumadocs-editor
 ```
 
 ### "Module not found: Can't resolve '@mdxeditor/editor'"
